@@ -9,7 +9,7 @@ __pycache__/
 .ipynb_checkpoints
 notebooks/
 log/
-saved_models/
+
 data/
 *.pkl
 *.png
