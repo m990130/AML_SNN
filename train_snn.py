@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import Dataset, DataLoader
 import lib.snn as snn
+import lib.spikeFileIO as io
 import zipfile
 import os
 
@@ -31,7 +32,7 @@ class nmnistDataset(Dataset):
         inputIndex = self.samples[index, 0]
         classLabel = self.samples[index, 1]
 
-        inputSpikes = snn.io.read2Dspikes(
+        inputSpikes = io.read2Dspikes(
             self.path + str(inputIndex.item()) + '.bs2'
         ).toSpikeTensor(torch.zeros((2, 34, 34, self.nTimeBins)),
                         samplingTime=self.samplingTime)
@@ -81,3 +82,103 @@ def extract_dataset(path='./',dataset_path= './data/mnist/NMNISTsmall.zip'):
 # extract_dataset()
 
 device = torch.device("cuda" if USE_CUDA else "cpu")
+
+#Create network instance.
+net = Network(netParams).to(device)
+
+# Create snn loss instance.
+error = snn.loss(netParams).to(device)
+
+# Define optimizer module.
+optimizer = torch.optim.Adam(net.parameters(), lr = 0.01, amsgrad = True)
+
+# Dataset and dataLoader instances.
+trainingSet = nmnistDataset(datasetPath =netParams['training']['path']['in'],
+                            sampleFile  =netParams['training']['path']['train'],
+                            samplingTime=netParams['simulation']['Ts'],
+                            sampleLength=netParams['simulation']['tSample'])
+trainLoader = DataLoader(dataset=trainingSet, batch_size=8, shuffle=False, num_workers=4)
+
+testingSet = nmnistDataset(datasetPath  =netParams['training']['path']['in'],
+                            sampleFile  =netParams['training']['path']['test'],
+                            samplingTime=netParams['simulation']['Ts'],
+                            sampleLength=netParams['simulation']['tSample'])
+testLoader = DataLoader(dataset=testingSet, batch_size=8, shuffle=False, num_workers=4)
+
+# Learning stats instance.
+stats = snn.learningStats()
+
+# # # Visualize the network.
+# for i in range(5):
+#   input, target, label = trainingSet[i]
+#   io.showTD(io.spikeArrayToEvent(input.reshape((2, 34, 34, -1)).cpu().data.numpy()))
+
+# training loop
+for epoch in range(100):
+    tSt = datetime.now()
+
+    # Training loop.
+    for i, (input, target, label) in enumerate(trainLoader, 0):
+        # Move the input and target to correct GPU.
+        input = input.to(device)
+        target = target.to(device)
+
+        # Forward pass of the network.
+        output = net.forward(input)
+
+        # Gather the training stats.
+        stats.training.correctSamples += torch.sum(snn.predict.getClass(output) == label).data.item()
+        stats.training.numSamples += len(label)
+
+        # Calculate loss.
+        loss = error.numSpikes(output, target)
+
+        # Reset gradients to zero.
+        optimizer.zero_grad()
+
+        # Backward pass of the network.
+        loss.backward()
+
+        # Update weights.
+        optimizer.step()
+
+        # Gather training loss stats.
+        stats.training.lossSum += loss.cpu().data.item()
+
+        # Display training stats.
+        stats.print(epoch, i, (datetime.now() - tSt).total_seconds())
+
+    # Testing loop.
+    # Same steps as Training loops except loss backpropagation and weight update.
+    for i, (input, target, label) in enumerate(testLoader, 0):
+        input = input.to(device)
+        target = target.to(device)
+
+        output = net.forward(input)
+
+        stats.testing.correctSamples += torch.sum(snn.predict.getClass(output) == label).data.item()
+        stats.testing.numSamples += len(label)
+
+        loss = error.numSpikes(output, target)
+        stats.testing.lossSum += loss.cpu().data.item()
+        stats.print(epoch, i)
+
+    # Update stats.
+    stats.update()
+
+# Plot the results.
+plt.figure(1)
+plt.semilogy(stats.training.lossLog, label='Training')
+plt.semilogy(stats.testing.lossLog, label='Testing')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.legend()
+
+plt.figure(2)
+plt.plot(stats.training.accuracyLog, label='Training')
+plt.plot(stats.testing.accuracyLog, label='Testing')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.legend()
+
+plt.show()

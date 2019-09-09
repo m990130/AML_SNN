@@ -4,8 +4,8 @@ from .slayerLoihi import spikeLayer as loihi
 from .slayerParams import yamlParams as params
 from .spikeLoss import spikeLoss as loss
 from .spikeClassifier import spikeClassifier as predict
-# import .spikeFileIO as io
 from .quantizeParams import quantizeWeights as quantize
+from .learningStats import learningStats, learningStat
 
 '''
 This modules bundles various SLAYER PyTorch modules as a single package.
@@ -20,4 +20,4 @@ The complete module can be imported as
 * The quantize module will be available as snn.quantize 
 '''
 
-__all__ = ["layer", "loihi", "params","loss","predict","quantize"]
+__all__ = ["layer", "loihi", "params","loss","predict","quantize","learningStats","learningStat"]
