@@ -16,11 +16,28 @@ def poisson_spike(x, time_bins):
     output = torch.stack(samples,dim=0).float()
     return output.reshape(shape_org+[time_bins])
 
+def uniform_spike(x, time_bins):
+    shape_org = list(x.shape)
+    shape_target = shape_org+[time_bins]
+    output = torch.rand(shape_target)
+    a = x.unsqueeze(-1)
+    b = torch.cat(10 * [a], dim=-1)
+    C = 0.2
+    output = (C*b > output)
+    return output.float()
+
+
+
 
 class SMNIST(Dataset):
-    def __init__(self, datasetPath, samplingTime, sampleLength):
+    def __init__(self, datasetPath, samplingTime, sampleLength, small=True):
         self.path = datasetPath
-        self.samples = MNIST(datasetPath, train=False, download=True ,transform=transforms.Compose([
+        if small:
+            ds = MNIST(datasetPath, train=False, download=True ,transform=transforms.Compose([
+                           transforms.ToTensor()]))
+            self.samples = [ds[i] for i in range(0,500)]
+        else:
+            self.samples = MNIST(datasetPath, train=False, download=True ,transform=transforms.Compose([
                            transforms.ToTensor()]))
         self.samplingTime = samplingTime
         self.nTimeBins = int(sampleLength / samplingTime)
