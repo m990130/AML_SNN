@@ -1,17 +1,11 @@
-import lib.snn as snn
-import  lib.spikeFileIO as io
-
-
 from datetime import datetime
-import numpy as np
 import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import Dataset, DataLoader
 import lib.snn as snn
-import lib.spikeFileIO as io
 import zipfile
 import os
-
+from lib.datasets.mnistdataset import SMNIST
 # CONSTANTS
 
 USE_CUDA = torch.cuda.is_available()
@@ -20,28 +14,6 @@ USE_CUDA = torch.cuda.is_available()
 netParams = snn.params('data/mnist/network.yaml')
 print(netParams)
 
-# Dataset definition
-class nmnistDataset(Dataset):
-    def __init__(self, datasetPath, sampleFile, samplingTime, sampleLength):
-        self.path = datasetPath
-        self.samples = np.loadtxt(sampleFile).astype('int')
-        self.samplingTime = samplingTime
-        self.nTimeBins = int(sampleLength / samplingTime)
-
-    def __getitem__(self, index):
-        inputIndex = self.samples[index, 0]
-        classLabel = self.samples[index, 1]
-
-        inputSpikes = io.read2Dspikes(
-            self.path + str(inputIndex.item()) + '.bs2'
-        ).toSpikeTensor(torch.zeros((2, 34, 34, self.nTimeBins)),
-                        samplingTime=self.samplingTime)
-        desiredClass = torch.zeros((10, 1, 1, 1))
-        desiredClass[classLabel, ...] = 1
-        return inputSpikes, desiredClass, classLabel
-
-    def __len__(self):
-        return self.samples.shape[0]
 
 # Network definition
 class Network(torch.nn.Module):
@@ -51,12 +23,12 @@ class Network(torch.nn.Module):
         slayer = snn.layer(netParams['neuron'], netParams['simulation'])
         self.slayer = slayer
         # define network functions
-        self.conv1 = slayer.conv(2, 16, 5, padding=1)
+        self.conv1 = slayer.conv(1, 16, 5, padding=1)
         self.conv2 = slayer.conv(16, 32, 3, padding=1)
         self.conv3 = slayer.conv(32, 64, 3, padding=1)
         self.pool1 = slayer.pool(2)
         self.pool2 = slayer.pool(2)
-        self.fc1   = slayer.dense((8, 8, 64), 10)
+        self.fc1   = slayer.dense((2, 2, 64), 10)
 
     def forward(self, spikeInput):
         spikeLayer1 = self.slayer.spike(self.conv1(self.slayer.psp(spikeInput ))) # 32, 32, 16
@@ -68,18 +40,6 @@ class Network(torch.nn.Module):
 
         return spikeOut
 
-
-def extract_dataset(path='./',dataset_path= './data/mnist/NMNISTsmall.zip'):
-    # Extract NMNIST samples
-    with zipfile.ZipFile(dataset_path) as zip_file:
-        for member in zip_file.namelist():
-            if not os.path.exists(os.path.join(path,member)):
-                zip_file.extract(member, path)
-            else:
-                print('extraction path already exist', os.path.join(path,member))
-
-
-extract_dataset()
 
 device = torch.device("cuda" if USE_CUDA else "cpu")
 
@@ -93,14 +53,12 @@ error = snn.loss(netParams).to(device)
 optimizer = torch.optim.Adam(net.parameters(), lr = 0.01, amsgrad = True)
 
 # Dataset and dataLoader instances.
-trainingSet = nmnistDataset(datasetPath =netParams['training']['path']['in'],
-                            sampleFile  =netParams['training']['path']['train'],
+trainingSet = SMNIST(datasetPath =netParams['training']['path']['in'],
                             samplingTime=netParams['simulation']['Ts'],
                             sampleLength=netParams['simulation']['tSample'])
 trainLoader = DataLoader(dataset=trainingSet, batch_size=8, shuffle=False, num_workers=4)
 
-testingSet = nmnistDataset(datasetPath  =netParams['training']['path']['in'],
-                            sampleFile  =netParams['training']['path']['test'],
+testingSet = SMNIST(datasetPath  =netParams['training']['path']['in'],
                             samplingTime=netParams['simulation']['Ts'],
                             sampleLength=netParams['simulation']['tSample'])
 testLoader = DataLoader(dataset=testingSet, batch_size=2, shuffle=False, num_workers=4)

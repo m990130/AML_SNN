@@ -14,7 +14,7 @@ def poisson_spike(x, time_bins):
         m1 = Poisson(yy)
         samples.append(m1.sample(sample_shape=(time_bins,)) > 0)
     output = torch.stack(samples,dim=0).float()
-    return output.reshape(shape_org+[time_bins]).squeeze()
+    return output.reshape(shape_org+[time_bins])
 
 
 class SMNIST(Dataset):
