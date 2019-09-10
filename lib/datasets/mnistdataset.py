@@ -53,3 +53,17 @@ class SMNIST(Dataset):
     def __len__(self):
         return len(self.samples)
 
+class MNIST500(Dataset):
+    def __init__(self, datasetPath, train=False):
+        self.path = datasetPath
+        ds = MNIST(datasetPath, train=train, download=True ,transform=transforms.Compose([
+                           transforms.ToTensor()]))
+        self.samples = [ds[i] for i in range(0,500)]
+
+    def __getitem__(self, index):
+        x, y = self.samples[index]
+        return x, y
+
+    def __len__(self):
+        return len(self.samples)
+
