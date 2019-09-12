@@ -21,8 +21,8 @@ def uniform_spike(x, time_bins):
     shape_target = shape_org+[time_bins]
     output = torch.rand(shape_target)
     a = x.unsqueeze(-1)
-    b = torch.cat(10 * [a], dim=-1)
-    C = 0.2
+    b = torch.cat(time_bins * [a], dim=-1)
+    C = 0.33
     output = (C*b > output)
     return output.float()
 
@@ -30,21 +30,25 @@ def uniform_spike(x, time_bins):
 
 
 class SMNIST(Dataset):
-    def __init__(self, datasetPath, samplingTime, sampleLength, small=True):
+    def __init__(self, datasetPath, samplingTime, sampleLength, small=True, train=True, encoding='uniform' ):
         self.path = datasetPath
         if small:
-            ds = MNIST(datasetPath, train=False, download=True ,transform=transforms.Compose([
+            ds = MNIST(datasetPath, train=train, download=True ,transform=transforms.Compose([
                            transforms.ToTensor()]))
             self.samples = [ds[i] for i in range(0,500)]
         else:
-            self.samples = MNIST(datasetPath, train=False, download=True ,transform=transforms.Compose([
+            self.samples = MNIST(datasetPath, train=train, download=True ,transform=transforms.Compose([
                            transforms.ToTensor()]))
         self.samplingTime = samplingTime
         self.nTimeBins = int(sampleLength / samplingTime)
+        self.encoding = encoding
 
     def __getitem__(self, index):
         x, classLabel = self.samples[index]
-        x_spikes = poisson_spike(x, self.nTimeBins)
+        if self.encoding == 'uniform':
+            x_spikes = uniform_spike(x, self.nTimeBins)
+        else:
+            x_spikes = poisson_spike(x, self.nTimeBins)
 
         desiredClass = torch.zeros((10, 1, 1, 1))
         desiredClass[classLabel, ...] = 1
