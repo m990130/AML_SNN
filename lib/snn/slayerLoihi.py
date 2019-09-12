@@ -1,17 +1,17 @@
 import sys, os
 
-CURRENT_SRC_DIR = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(CURRENT_SRC_DIR + "/../../slayerPyTorch/src")
+#CURRENT_SRC_DIR = os.path.dirname(os.path.realpath(__file__))
+#sys.path.append(CURRENT_SRC_DIR + "/../../slayerPyTorch/src")
 
 import math
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import lib.snn.slayer as slayer
+from . import slayer as slayer
 import slayerCuda
 import slayerLoihiCuda
-from lib.snn.quantizeParams import quantizeWeights
+from .quantizeParams import quantizeWeights
 
 class spikeLayer(slayer.spikeLayer):
     '''
