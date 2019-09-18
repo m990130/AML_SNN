@@ -11,9 +11,14 @@ notebooks/
 log/
 
 data/
+data/mnist/*
 *.pkl
 *.png
 *.jpg
 
 # vs code files
-._* 
+._*
+!saved_models/tailor_cnn.pt
+!saved_models/snn_slayer.pt
+!saved_models/raw_cnn.pt
+!data/mnist/network.yaml
