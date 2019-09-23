@@ -20,4 +20,4 @@ The complete module can be imported as
 * The quantize module will be available as snn.quantize 
 '''
 
-__all__ = ["layer", "loihi", "params","loss","predict","quantize","learningStats","learningStat"]
+__all__ = ["layer", "loihi", "params", "loss", "predict", "quantize", "learningStats", "learningStat", "UpSampling2D"]

@@ -21,4 +21,6 @@ data/mnist/*
 !saved_models/tailor_cnn.pt
 !saved_models/snn_slayer.pt
 !saved_models/raw_cnn.pt
+!saved_models/autoencoder.pt
 !data/mnist/network.yaml
+!saved_figs/*.jpg

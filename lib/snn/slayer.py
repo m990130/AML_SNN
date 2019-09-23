@@ -3,6 +3,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from .slayerUpsampling import UpSampling2D
 import yaml
 # import slayer_cuda
 import slayerCuda
@@ -312,6 +313,9 @@ class spikeLayer(torch.nn.Module):
         >>> outSpike = snnLayer.spike(membranePotential)
         '''
         return _spikeFunction.apply(membranePotential, self.refKernel, self.neuron, self.simulation['Ts'])
+
+    def upsampling2d(self, scale_factor, mode='nearest'):
+        return UpSampling2D(scale_factor=scale_factor, mode=mode)
 
 class _denseLayer(nn.Conv3d):
     def __init__(self, inFeatures, outFeatures, weightScale=1):

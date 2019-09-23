@@ -3,6 +3,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 from lib.snn.slayer import spikeLayer
+from lib.utils import spikeTensorToProb
+
 
 class spikeLoss(torch.nn.Module):   
     '''
@@ -52,7 +54,8 @@ class spikeLoss(torch.nn.Module):
         >>> loss = error.spikeTime(spikeOut, spikeDes)
         '''
         # Tested with autograd, it works
-        assert self.errorDescriptor['type'] == 'SpikeTime', "Error type is not SpikeTime"
+        assert self.errorDescriptor['type'] == 'SpikeTime', "Error type is not SpikeTime != {} ".format(
+            self.errorDescriptor['type'])
         # error = self.psp(spikeOut - spikeDesired) 
         error = self.slayer.psp(spikeOut - spikeDesired) 
         return 1/2 * torch.sum(error**2) * self.simulation['Ts']
@@ -102,8 +105,8 @@ class spikeLoss(torch.nn.Module):
         error += torch.FloatTensor(errorSpikeCount * targetRegion).to(spikeOut.device)
         
         return 1/2 * torch.sum(error**2) * self.simulation['Ts']
-    
-    def probSpikes(spikeOut, spikeDesired, probSlidingWindow = 20):
+
+    def probSpikes(self, spikeOut, spikeDesired, probSlidingWindow=20):
         assert self.errorDescriptor['type'] == 'ProbSpikes', "Error type is not ProbSpikes"
         pass
 
@@ -133,8 +136,8 @@ class spikeLoss(torch.nn.Module):
     #                   elif diff > 0:
     #                       spikeDes[n,c,h,w,(actualInd[:diff] + startID)] = 1 / self.simulation['Ts']
     #                       probableInds = np.random.randint(low=startID, high=stopID, size = diff)
-                            
-                            
-        
-        
-        
+    def loss_mse(self, x, y):
+        x = spikeTensorToProb(x).view(-1).float()
+        y = y.view(-1).float()
+        error = (x - y) ** 2
+        return error.sum()
