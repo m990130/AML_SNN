@@ -2,10 +2,11 @@ import torch
 import numpy as np
 from torchvision import transforms
 from scipy.ndimage.filters import gaussian_filter, uniform_filter
+from skimage.transform import resize
 import matplotlib.pyplot as plt
 import torchvision.models as models
-from skimage.transform import resize
 from torch.autograd import Variable
+import cv2
 from tqdm import tqdm
 
 """
@@ -71,19 +72,32 @@ class Visualization:
                 # loss = -img_opt.mean()
                 loss.backward()
                 optimizer.step()
-                # print('Current loss: opt_step ', ii, 'upscaling step', i, loss.item())
+                print('Current loss: opt_step ', ii, 'upscaling step', i, loss.item())
             # denormalization
+            img = img_opt.data.cpu().numpy()[0]
             for c, (m, s) in enumerate(zip(means, stds)):
-                img_opt[0][c] = s * img_opt[0][c] + m
+                img[c] = s * img[c] + m
 
-            img = img_opt.clone().detach().cpu().numpy()[0]
-            img = uniform_filter(img, 2).transpose(1, 2, 0)
-            # img = gaussian_filter(img, 0.3).transpose(1, 2, 0)
-            # skimage.filters.gaussian_filter(im, 2, multichannel=True, mode='reflect', 'truncate=2')
+            img = img.transpose(1, 2, 0)
+
+            output = img.copy()
+
+
             size = int(size * upscaling_factor)
             img = resize(img, (size, size, 3), order=3)
 
-        output = img
+            # img = cv2.resize(img, (size, size), interpolation = cv2.INTER_CUBIC)  # scale image up
+            img = cv2.blur(img, (5, 5))  # blur image to reduce high frequency patterns
+            # img = uniform_filter(img, 3)
+            # img = gaussian_filter(img,0.8)
+            # blur = 5
+            # img = cv2.blur(img, (blur, blur))
+            # img[:, :, 0] = gaussian_filter(img[:, :, 0], 0.5)
+            # img[:, :, 1] = gaussian_filter(img[:, :, 1], 0.5)
+            # img[:, :, 2] = gaussian_filter(img[:, :, 2], 0.5)
+            # skimage.filters.gaussian_filter(im, 2, multichannel=True, mode='reflect', 'truncate=2')
+
+
         cropped_output = np.clip(output, 0, 1)
         fig = plt.figure()
         plt.imshow(cropped_output)
@@ -95,7 +109,7 @@ class Visualization:
 
 if __name__ == '__main__':
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    model = models.vgg16(pretrained=True).to(device)
+    model = models.vgg16_bn(pretrained=True).to(device)
     print(model)
     v = Visualization(model, device)
-    v.visualize(layer=28, kernel=400, optimization_steps=20, upscaling_steps=12)
+    v.visualize(layer=40, kernel=265, optimization_steps=20, upscaling_steps=12)

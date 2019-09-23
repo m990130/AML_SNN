@@ -5,16 +5,16 @@ import torch
 
 
 class Evaluation:
-    def __init__(self, netParams, device, optimizer, testSet, accuracy=False):
+    def __init__(self, netParams, device, optimizer, testSet, classification=False):
         self.netParams = netParams
         self.testLoader = DataLoader(dataset=testSet, batch_size=2, shuffle=False, num_workers=4)
         self.device = device
         self.optimizer = optimizer
         error = snn.loss(self.netParams).to(self.device)
         self.criterion = Criterion(error, netParams['training']['error']['type'])
-        self.accuracy = accuracy
+        self.classification = classification
 
-    def test(self, model, stats):
+    def test(self, model, stats, epoch=-1):
         # # Testing loop.
         # # Same steps as Training loops except loss backpropagation and weight update.
         for i, (sample, target, label) in enumerate(self.testLoader, 0):
@@ -23,10 +23,10 @@ class Evaluation:
 
             output = model.forward(sample)
 
-            if self.accuracy:
+            if self.classification:
                 stats.testing.correctSamples += torch.sum(snn.predict.getClass(output) == label).data.item()
                 stats.testing.numSamples += len(label)
 
             loss = self.criterion(output, target)
             stats.testing.lossSum += loss.cpu().data.item()
-            # stats.print(epoch, i)
+            stats.print(epoch, i)

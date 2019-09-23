@@ -1,0 +1,23 @@
+simulation:
+  Ts: 1.0
+  tSample: 25
+  nSample: 12
+neuron:
+  type:     SRMALPHA
+  theta:    5
+  tauSr:    10.0
+  tauRef:   0.9
+  scaleRef: 2     # relative to theta
+  tauRho:   1     # relative to theta #0.43429448190325176
+  scaleRho: 1
+training:
+  error:
+    type: SpikeTime # NumSpikes #ProbSpikes #NumSpikes
+    probSlidingWin: 20  # only valid for ProbSpikes
+    tgtSpikeRegion: {start: 0, stop: 25}    # only valid for NumSpikes and ProbSpikes
+    tgtSpikeCount: {true: 20, false: 5}    # only valid for NumSpikes
+  path:
+    # out:     OutFiles/
+    in:      NMNISTsmall/
+    train:   NMNISTsmall/train1K.txt
+    test:    NMNISTsmall/test100.txt

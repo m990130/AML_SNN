@@ -4,7 +4,7 @@ simulation:
     nSample: 12
 neuron:
     type:     SRMALPHA
-    theta:    10
+    theta:    2.9
     tauSr:    10.0
     tauRef:   1.0
     scaleRef: 2     # relative to theta

@@ -9,5 +9,7 @@ class Criterion():
 
         elif self.mode == 'SpikeTime':
             return self.error.spikeTime(output, target)
+        elif self.mode == 'NumSpikes':
+            return self.error.numSpikes(output, target)
         else:
             raise Exception("Mode not chosen correctly!")

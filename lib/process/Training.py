@@ -1,5 +1,6 @@
 from datetime import datetime
 import matplotlib.pyplot as plt
+import torch
 from torch.utils.data import Dataset, DataLoader
 import lib.snn as snn
 from lib.datasets.mnistdataset import SMNIST
@@ -8,15 +9,17 @@ from Criterion import Criterion
 
 
 class Training():
-    def __init__(self, netParams, device, optimizer, trainingSet):
+    def __init__(self, netParams, device, optimizer, trainingSet, classification=False):
         self.netParams = netParams
         self.trainLoader = DataLoader(dataset=trainingSet, batch_size=8, shuffle=False, num_workers=4)
         self.device = device
         self.optimizer = optimizer
         error = snn.loss(self.netParams).to(self.device)
         self.criterion = Criterion(error, netParams['training']['error']['type'])
+        self.classification = classification
 
-    def train(self, net, stats):
+    def train(self, net, stats, epoch=-1, tSt=None):
+        tSt = datetime.now()
         # Training loop.
         net.train()
         for i, (sample, target, label) in enumerate(self.trainLoader, 0):
@@ -28,8 +31,9 @@ class Training():
             output = net.forward(sample)
 
             # # Gather the training stats.
-            # stats.training.correctSamples += torch.sum(snn.predict.getClass(output) == label).data.item()
-            stats.training.numSamples += len(label)
+            if self.classification:
+                stats.training.correctSamples += torch.sum(snn.predict.getClass(output) == label).data.item()
+                stats.training.numSamples += len(label)
             #
             # sample = spikeTensorToProb(sample)
 
@@ -37,6 +41,7 @@ class Training():
             # loss = error.numSpikes(output, target)
             # loss = loss_mse(output,target)
             loss = self.criterion(output, target)
+
             # Reset gradients to zero.
             self.optimizer.zero_grad()
 
@@ -51,8 +56,8 @@ class Training():
             stats.training.lossSum += loss.cpu().data.item()
 
             # Display training stats.
-            # if i % 100 == 0:
-            #    stats.print(epoch, i, (datetime.now() - tSt).total_seconds())
+            if i % 100 == 0:
+                stats.print(epoch, i, (datetime.now() - tSt).total_seconds())
 
     def eval(self):
         pass
