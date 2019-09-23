@@ -1,7 +1,7 @@
 import torch
 from torch.distributions import Poisson
 from torch.utils.data import Dataset, DataLoader
-from torchvision.datasets import MNIST
+from torchvision.datasets import CIFAR10
 from torchvision.transforms import transforms
 import matplotlib.pyplot as plt
 
@@ -34,11 +34,11 @@ class SMNIST(Dataset):
         self.mode = mode
         self.path = datasetPath
         if small:
-            ds = MNIST(datasetPath, train=train, download=True, transform=transforms.Compose([
+            ds = CIFAR10(datasetPath, train=train, download=True, transform=transforms.Compose([
                 transforms.ToTensor()]))
             self.samples = [ds[i] for i in range(0, 500)]
         else:
-            self.samples = MNIST(datasetPath, train=train, download=True, transform=transforms.Compose([
+            self.samples = CIFAR10(datasetPath, train=train, download=True, transform=transforms.Compose([
                 transforms.ToTensor()]))
         self.samplingTime = samplingTime
         self.nTimeBins = int(sampleLength / samplingTime)
@@ -66,11 +66,11 @@ class SMNIST(Dataset):
         return len(self.samples)
 
 
-class MNIST500(Dataset):
-    def __init__(self, datasetPath, train=False):
+class CIFAR(Dataset):
+    def __init__(self, datasetPath, train=False, transform=transforms.Compose([
+        transforms.ToTensor()])):
         self.path = datasetPath
-        ds = MNIST(datasetPath, train=train, download=True, transform=transforms.Compose([
-            transforms.ToTensor()]))
+        ds = CIFAR10(datasetPath, train=train, download=True, transform=transform)
         self.samples = [ds[i] for i in range(0, 500)]
 
     def __getitem__(self, index):
