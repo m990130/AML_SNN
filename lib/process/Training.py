@@ -22,6 +22,10 @@ class Training():
         tSt = datetime.now()
         # Training loop.
         net.train()
+        N = 0
+        correct = 0
+        c = 0
+        n = 0
         for i, (sample, target, label) in enumerate(self.trainLoader, 0):
             # Move the input and target to correct GPU.
             sample = sample.to(self.device)
@@ -32,8 +36,13 @@ class Training():
 
             # # Gather the training stats.
             if self.classification:
+                c = torch.sum(snn.predict.getClass(output) == label).data.item()
+                correct += c
+                n = len(label)
+                N += n
                 stats.training.correctSamples += torch.sum(snn.predict.getClass(output) == label).data.item()
                 stats.training.numSamples += len(label)
+            #
             #
             # sample = spikeTensorToProb(sample)
 
@@ -52,12 +61,15 @@ class Training():
             self.optimizer.step()
 
             # print('loss ', loss.item())
+            # print('acc ', c/n) if n>0 else print('acc U')
             # Gather training loss stats.
             stats.training.lossSum += loss.cpu().data.item()
 
             # Display training stats.
-            if i % 100 == 0:
-                stats.print(epoch, i, (datetime.now() - tSt).total_seconds())
-
+            # if i % 100 == 0:
+            #     stats.print(epoch, i, (datetime.now() - tSt).total_seconds())
+            stats.print(epoch, i, (datetime.now() - tSt).total_seconds())
+        print('acc epoch ', correct / N) if N > 0 else print('acc epoch U')
+        print('\n\n\n\n')
     def eval(self):
         pass

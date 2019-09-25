@@ -30,3 +30,4 @@ class Evaluation:
             loss = self.criterion(output, target)
             stats.testing.lossSum += loss.cpu().data.item()
             stats.print(epoch, i)
+        print('\n\n\n\n')

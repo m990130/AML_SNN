@@ -9,11 +9,11 @@ from lib.utils import save_model, load_model
 from lib.process.Training import Training
 from lib.process.Evaluation import Evaluation
 from lib.datasets import SCIFAR
-from models.Classifiers import SlayerVgg16
+from models.Classifiers import SlayerVgg16, SlayerSNN
 
 # CONSTANTS:
 USE_CUDA = torch.cuda.is_available()
-EPOCHs = 100
+EPOCHs = 700
 SMALL = True
 DATASETMODE = 'classification'
 MODEL_PTH = 'slayer_cifar'
@@ -25,6 +25,7 @@ device = torch.device("cuda" if USE_CUDA else "cpu")
 
 # Create network instance.
 model = SlayerVgg16(netParams).to(device)
+# model = SlayerSNN(netParams).to(device)
 
 # Load model
 load_model(MODEL_PTH, model)
@@ -51,17 +52,33 @@ training = Training(netParams, device, optimizer, trainingSet, classification=Tr
 testing = Evaluation(netParams, device, optimizer, testingSet, classification=True)
 
 # training loop
+max_acc = 0
 for epoch in range(EPOCHs):
     print('{} / {}'.format(epoch, EPOCHs))
-
+    # Reset training stats.
+    stats.training.reset()
+    # Training
     training.train(model, stats, epoch=epoch)
-
+    # Update training stats.
+    stats.training.update()
+    # Reset testing stats.
+    stats.testing.reset()
     testing.test(model, stats)
-
     # Update stats.
-    stats.update()
-    if epoch % 100 == 0 and epoch != 0:
+    stats.testing.update()
+    # # Update stats.
+    # stats.update()
+    if max_acc < stats.testing.accuracy():
+        print('Saving model. Model improved : currect acc ', stats.testing.accuracy(), ' max acc, ', max_acc)
+        print('\n\n\n\n')
         save_model(MODEL_PTH, model)
+        max_acc = stats.testing.accuracy()
+
+    else:
+        print('Model didn\'t improve : currect acc ', stats.testing.accuracy(), ' max acc, ', max_acc)
+        print('\n\n\n\n')
+
+    # if epoch % 100 == 0 and epoch != 0:
 
 save_model(MODEL_PTH, model)
 
