@@ -146,7 +146,7 @@ class SlayerVisualization:
     def visualize(self, layer, kernel, size=56, lr=0.1, upscaling_steps=12, upscaling_factor=1.2,
                   optimization_steps=20):
         # generate random image
-        img = np.random.uniform(150, 180, (size, size, 3)) / 255
+        img = np.random.uniform(0, 255, (size, size, 3)) / 255
         # register hook
         activations = SaveFeatures(list(self.model.children())[layer])
         # create tranformers;
@@ -200,14 +200,15 @@ class SlayerVisualization:
             img = img.transpose(1, 2, 0)
 
             output = img.copy()
+            plt.imshow(output), plt.show()
 
             size = int(size * upscaling_factor)
             img = resize(img, (size, size, 3), order=3)
 
             # img = cv2.resize(img, (size, size), interpolation = cv2.INTER_CUBIC)  # scale image up
-            # img = cv2.blur(img, (3, 3))  # blur image to reduce high frequency patterns
+            img = cv2.blur(img, (3, 3))  # blur image to reduce high frequency patterns
             # img = uniform_filter(img, 3)
-            img = gaussian_filter(img, 0.8)
+            # img = gaussian_filter(img, 0.08)
             # blur = 5
             # img = cv2.blur(img, (blur, blur))
             # img[:, :, 0] = gaussian_filter(img[:, :, 0], 0.5)
@@ -234,4 +235,4 @@ if __name__ == '__main__':
     model = SlayerVgg16(netParams)
     print(model)
     v = SlayerVisualization(model, device)
-    v.visualize(layer=1, kernel=12, optimization_steps=50, lr=0.2, upscaling_steps=9, upscaling_factor=1.2)
+    v.visualize(layer=10, kernel=60, optimization_steps=25, lr=0.1, upscaling_steps=12, upscaling_factor=1.2)

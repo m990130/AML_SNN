@@ -54,12 +54,18 @@ class spikeLoss(torch.nn.Module):
         >>> loss = error.spikeTime(spikeOut, spikeDes)
         '''
         # Tested with autograd, it works
-        assert self.errorDescriptor['type'] == 'SpikeTime', "Error type is not SpikeTime != {} ".format(
-            self.errorDescriptor['type'])
+        # assert self.errorDescriptor['type'] == 'SpikeTime', "Error type is not SpikeTime != {} ".format(
+        #     self.errorDescriptor['type'])
         # error = self.psp(spikeOut - spikeDesired) 
         error = self.slayer.psp(spikeOut - spikeDesired) 
         return 1/2 * torch.sum(error**2) * self.simulation['Ts']
-    
+
+    def ELBO(self, spikeOut, spikeDesired):
+        vanRossum = self.spikeTime(spikeOut[0], spikeDesired)  # /(2*sigma_G**2)
+        KLD = -0.5 * torch.sum(1 + spikeOut[2] - spikeOut[1].pow(2) - spikeOut[2].exp())
+
+        return (vanRossum + KLD) / spikeOut[0].size(0)
+
     def numSpikes(self, spikeOut, desiredClass, numSpikesScale=1):
         '''
         Calculates spike loss based on number of spikes within a `target region`.
@@ -137,7 +143,10 @@ class spikeLoss(torch.nn.Module):
     #                       spikeDes[n,c,h,w,(actualInd[:diff] + startID)] = 1 / self.simulation['Ts']
     #                       probableInds = np.random.randint(low=startID, high=stopID, size = diff)
     def loss_mse(self, x, y):
-        x = spikeTensorToProb(x).view(-1).float()
+        if len(x.shape) < 5:  # x has time axis
+            x = spikeTensorToProb(x).view(-1).float()
+        else:
+            x = x.view(-1).float()
         y = y.view(-1).float()
         error = (x - y) ** 2
         return error.sum()

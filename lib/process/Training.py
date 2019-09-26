@@ -11,7 +11,7 @@ from Criterion import Criterion
 class Training():
     def __init__(self, netParams, device, optimizer, trainingSet, classification=False):
         self.netParams = netParams
-        self.trainLoader = DataLoader(dataset=trainingSet, batch_size=8, shuffle=False, num_workers=4)
+        self.trainLoader = DataLoader(dataset=trainingSet, batch_size=32, shuffle=False, num_workers=4)
         self.device = device
         self.optimizer = optimizer
         error = snn.loss(self.netParams).to(self.device)
@@ -41,7 +41,7 @@ class Training():
                 n = len(label)
                 N += n
                 stats.training.correctSamples += torch.sum(snn.predict.getClass(output) == label).data.item()
-                stats.training.numSamples += len(label)
+            stats.training.numSamples += len(label)
             #
             #
             # sample = spikeTensorToProb(sample)
@@ -69,7 +69,10 @@ class Training():
             # if i % 100 == 0:
             #     stats.print(epoch, i, (datetime.now() - tSt).total_seconds())
             stats.print(epoch, i, (datetime.now() - tSt).total_seconds())
-        print('acc epoch ', correct / N) if N > 0 else print('acc epoch U')
-        print('\n\n\n\n')
+        if self.classification:
+            print('acc epoch ', correct / N) if N > 0 else print('acc epoch U')
+            print('\n\n\n\n')
+
+
     def eval(self):
         pass

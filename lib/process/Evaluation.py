@@ -2,12 +2,12 @@ from torch.utils.data import Dataset, DataLoader
 import lib.snn as snn
 from Criterion import Criterion
 import torch
-
-
+import matplotlib.pyplot as plt
+import numpy as np
 class Evaluation:
     def __init__(self, netParams, device, optimizer, testSet, classification=False):
         self.netParams = netParams
-        self.testLoader = DataLoader(dataset=testSet, batch_size=2, shuffle=False, num_workers=4)
+        self.testLoader = DataLoader(dataset=testSet, batch_size=16, shuffle=False, num_workers=4)
         self.device = device
         self.optimizer = optimizer
         error = snn.loss(self.netParams).to(self.device)
@@ -25,9 +25,27 @@ class Evaluation:
 
             if self.classification:
                 stats.testing.correctSamples += torch.sum(snn.predict.getClass(output) == label).data.item()
-                stats.testing.numSamples += len(label)
+            stats.testing.numSamples += len(label)
 
             loss = self.criterion(output, target)
             stats.testing.lossSum += loss.cpu().data.item()
             stats.print(epoch, i)
         print('\n\n\n\n')
+
+    def make_grid(self, decoder, n=10, conditional=False, digit=None):
+
+        normal = torch.distributions.normal.Normal(0, torch.ones(1))
+        # we need to generate z values corresponding to a evenly spaced
+        # probability, so the inverse cdf function is required
+        z1 = normal.icdf(torch.linspace(1e-3, 1 - 1e-3, n))
+        z2 = normal.icdf(torch.linspace(1e-3, 1 - 1e-3, n))
+        # the min/max value for the axis
+        z_min, z_max = z1.min().numpy(), z1.max().numpy()
+        grid_z = torch.stack(torch.meshgrid(z1, z2), dim=2).view(-1, 2)
+
+        plt.figure(figsize=(10, 10))
+        pred_x = decoder(grid_z.to(self.device)).detach().cpu().view(n, n, 28, 28)
+
+        plt.imshow(np.block(list(map(list, pred_x.numpy()))), cmap='gray',
+                   origin='upper', extent=[z_min, z_max, z_min, z_max])
+        plt.show()
