@@ -46,11 +46,19 @@ def LIF(spikes, theta, leak, V_min):
 
 class convLayer(nn.Conv3d):
 
-    def __init__(self, inChannels, outChannels, kernelSize, theta, leak=0, V_min=0, check_mode=False):
+    def __init__(self, inChannels, outChannels, kernelSize, theta, padding=0, leak=0, V_min=0, check_mode=False):
         
         kernel = (kernelSize, kernelSize, 1)
-
+        
+        if type(padding) == int:
+            padding = (padding, padding, 0)
+        elif len(padding) == 2:
+            padding = (padding[0], padding[1], 0)
+        else:
+            raise Exception('padding can be either int or tuple of size 2. It was: {}'.format(padding.shape))
+        
         super(convLayer, self).__init__(inChannels, outChannels, kernel, bias=False)
+        self.padding = padding
         self.theta = theta
         self.leak = leak
         self.V_min = V_min
@@ -98,7 +106,7 @@ class poolLayer(nn.AvgPool3d):
             return output[1]
 
 class denseLayer(nn.Conv3d):
-    def __init__(self, inFeatures, outFeatures, theta, leak=0, V_min=0, check_mode=False):
+    def __init__(self, inFeatures, outFeatures, theta, padding=0, leak=0, V_min=0, check_mode=False):
         '''
         '''
         # extract information for kernel and inChannels
@@ -118,9 +126,16 @@ class denseLayer(nn.Conv3d):
             outChannels = outFeatures
         else:
             raise Exception('outFeatures should not be more than 1 dimesnion. It was: {}'.format(outFeatures.shape))
+            
+        if type(padding) == int:
+            padding = (padding, padding, 0)
+        elif len(padding) == 2:
+            padding = (padding[0], padding[1], 0)
+        else:
+            raise Exception('padding can be either int or tuple of size 2. It was: {}'.format(padding.shape))
 
         super(denseLayer, self).__init__(inChannels, outChannels, kernel, bias=False)
-
+        self.padding = padding
         # params for the LIF
         self.theta = theta
         self.leak = leak
