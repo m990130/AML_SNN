@@ -11,5 +11,7 @@ class Criterion():
             return self.error.spikeTime(output, target)
         elif self.mode == 'NumSpikes':
             return self.error.numSpikes(output, target)
+        elif self.mode == 'ELBO':
+            return self.error.ELBO(output, target)
         else:
             raise Exception("Mode not chosen correctly!")

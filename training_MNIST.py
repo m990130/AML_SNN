@@ -8,23 +8,23 @@ from lib.utils import save_model, load_model
 
 from lib.process.Training import Training
 from lib.process.Evaluation import Evaluation
-from lib.datasets import SCIFAR
-from models.Classifiers import SlayerVgg16, SlayerSNN
+from lib.datasets import SMNIST
+from models.Classifiers import SlayerVgg16, SlayerSNN, SlayerSNN2
 
 # CONSTANTS:
 USE_CUDA = torch.cuda.is_available()
 EPOCHs = 700
 SMALL = True
 DATASETMODE = 'classification'
-MODEL_PTH = 'slayer_cifar'
+MODEL_PTH = 'slayer_mnist'
 
-netParams = snn.params('network_specs/slayer_cifar.yaml')
+netParams = snn.params('network_specs/slayer_snn.yaml')
 print(netParams)
 
 device = torch.device("cuda" if USE_CUDA else "cpu")
 
 # Create network instance.
-model = SlayerVgg16(netParams).to(device)
+model = SlayerSNN2(netParams, input_channels=1).to(device)
 # model = SlayerSNN(netParams).to(device)
 
 # Load model
@@ -36,13 +36,13 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001, amsgrad=True)
 # Learning stats instance.
 stats = snn.learningStats()
 
-trainingSet = SCIFAR(datasetPath=netParams['training']['path']['in'],
+trainingSet = SMNIST(datasetPath=netParams['training']['path']['in'],
                      samplingTime=netParams['simulation']['Ts'],
                      sampleLength=netParams['simulation']['tSample'],
                      mode=DATASETMODE,
                      small=SMALL)
 
-testingSet = SCIFAR(datasetPath=netParams['training']['path']['in'],
+testingSet = SMNIST(datasetPath=netParams['training']['path']['in'],
                     samplingTime=netParams['simulation']['Ts'],
                     sampleLength=netParams['simulation']['tSample'],
                     mode=DATASETMODE,
