@@ -6,17 +6,19 @@ import lib.snn as snn
 from lib.datasets.mnistdataset import SMNIST
 from lib.utils import spikeTensorToProb, save_model
 from Criterion import Criterion
-
+from .WeightCollector import WeightCollector
+import pickle
 
 class Training():
-    def __init__(self, netParams, device, optimizer, trainingSet, classification=False):
+    def __init__(self, netParams, device, optimizer, trainingSet, classification=False, collect_weights=False):
         self.netParams = netParams
-        self.trainLoader = DataLoader(dataset=trainingSet, batch_size=32, shuffle=False, num_workers=4)
+        self.trainLoader = DataLoader(dataset=trainingSet, batch_size=8, shuffle=False, num_workers=4)
         self.device = device
         self.optimizer = optimizer
         error = snn.loss(self.netParams).to(self.device)
         self.criterion = Criterion(error, netParams['training']['error']['type'])
         self.classification = classification
+        self.weightCollector = WeightCollector() if collect_weights else None
 
     def train(self, net, stats, epoch=-1, tSt=None):
         tSt = datetime.now()
@@ -61,6 +63,9 @@ class Training():
             self.optimizer.step()
 
             # print('loss ', loss.item())
+            if self.weightCollector and i % 10 == 0:
+                self.weightCollector.capture(net, loss.item())
+
             # print('acc ', c/n) if n>0 else print('acc U')
             # Gather training loss stats.
             stats.training.lossSum += loss.cpu().data.item()
@@ -72,7 +77,9 @@ class Training():
         if self.classification:
             print('acc epoch ', correct / N) if N > 0 else print('acc epoch U')
             print('\n\n\n\n')
-
+        if self.weightCollector:
+            with open('name.p', 'wb') as f:
+                pickle.dump(self.weightCollector, f)
 
     def eval(self):
         pass

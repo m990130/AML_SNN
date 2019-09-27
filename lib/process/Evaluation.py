@@ -4,6 +4,8 @@ from Criterion import Criterion
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
+from lib.datasets.encoders import uniform_spike
+
 class Evaluation:
     def __init__(self, netParams, device, optimizer, testSet, classification=False):
         self.netParams = netParams
@@ -41,10 +43,11 @@ class Evaluation:
         z2 = normal.icdf(torch.linspace(1e-3, 1 - 1e-3, n))
         # the min/max value for the axis
         z_min, z_max = z1.min().numpy(), z1.max().numpy()
-        grid_z = torch.stack(torch.meshgrid(z1, z2), dim=2).view(-1, 2)
+        grid_z = torch.stack(torch.meshgrid(z1, z2, 1), dim=2).view(-1, 2, 1, 1)
+        grid_z = uniform_spike(grid_z, 50)
 
         plt.figure(figsize=(10, 10))
-        pred_x = decoder(grid_z.to(self.device)).detach().cpu().view(n, n, 28, 28)
+        pred_x = decoder(grid_z.to(self.device))  # .detach().cpu().view(n, n, 28, 28)
 
         plt.imshow(np.block(list(map(list, pred_x.numpy()))), cmap='gray',
                    origin='upper', extent=[z_min, z_max, z_min, z_max])

@@ -13,11 +13,11 @@ from models.Autoencoder import VAE
 
 # CONSTANTS:
 USE_CUDA = torch.cuda.is_available()
-EPOCHs = 200
+EPOCHs = 500
 SMALL = True
 DATASETMODE = 'autoencoderSpike'
 MODEL_PTH = 'vae'
-LR = 0.001
+LR = 0.0001
 
 netParams = snn.params('network_specs/vae.yaml')
 print(netParams)
@@ -25,7 +25,7 @@ print(netParams)
 device = torch.device("cuda" if USE_CUDA else "cpu")
 
 # Create network instance.
-model = VAE(netParams, hidden_size=100, latent_size=50).to(device)
+model = VAE(netParams, hidden_size=100, latent_size=2).to(device)
 
 # Load model
 load_model(MODEL_PTH, model)
@@ -45,6 +45,7 @@ trainingSet = SMNIST(datasetPath=netParams['training']['path']['in'],
 testingSet = SMNIST(datasetPath=netParams['training']['path']['in'],
                     samplingTime=netParams['simulation']['Ts'],
                     sampleLength=netParams['simulation']['tSample'],
+                    train=False,
                     mode=DATASETMODE,
                     small=SMALL)
 

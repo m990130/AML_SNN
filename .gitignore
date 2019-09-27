@@ -27,4 +27,6 @@ data/mnist/*
 !saved_models/snn_tailored.pt
 !data/mnist/network.yaml
 !saved_figs/*.jpg
+!saved_figs/*.png
+
 !saved_models/vae.pt
