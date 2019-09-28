@@ -48,35 +48,10 @@ testingSet = SCIFAR(datasetPath=netParams['training']['path']['in'],
                     mode=DATASETMODE,
                     small=SMALL)
 
-training = Training(netParams, device, optimizer, trainingSet, classification=True, collect_weights=True)
+training = Training(netParams, device, optimizer, trainingSet, classification=True, collect_weights=False)
 testing = Evaluation(netParams, device, optimizer, testingSet, classification=True)
 
 # training loop
-max_acc = 0
-for epoch in range(EPOCHs):
-    print('{} / {}'.format(epoch, EPOCHs))
-    # Reset training stats.
-    stats.training.reset()
-    # Training
-    training.train(model, stats, epoch=epoch)
-    # Update training stats.
-    stats.training.update()
-    # Reset testing stats.
-    stats.testing.reset()
-    testing.test(model, stats)
-    # Update stats.
-    stats.testing.update()
-    # # Update stats.
-    # stats.update()
-    if max_acc < stats.testing.accuracy():
-        print('Saving model. Model improved : currect acc ', stats.testing.accuracy(), ' max acc, ', max_acc)
-        print('\n\n\n\n')
-        save_model(MODEL_PTH, model)
-        max_acc = stats.testing.accuracy()
-
-    else:
-        print('Model didn\'t improve : currect acc ', stats.testing.accuracy(), ' max acc, ', max_acc)
-        print('\n\n\n\n')
 
     # if epoch % 100 == 0 and epoch != 0:
 

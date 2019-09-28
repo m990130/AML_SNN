@@ -63,7 +63,7 @@ class Training():
             self.optimizer.step()
 
             # print('loss ', loss.item())
-            if self.weightCollector and i % 10 == 0:
+            if self.weightCollector and i % 5 == 0:
                 self.weightCollector.capture(net, loss.item())
 
             # print('acc ', c/n) if n>0 else print('acc U')
@@ -78,7 +78,8 @@ class Training():
             print('acc epoch ', correct / N) if N > 0 else print('acc epoch U')
             print('\n\n\n\n')
         if self.weightCollector:
-            with open('name.p', 'wb') as f:
+            with open('weights' + str(net.__class__) + '_' + str(self.optimizer.param_groups[0]['momentum']) + '.p',
+                      'wb') as f:
                 pickle.dump(self.weightCollector, f)
 
     def eval(self):

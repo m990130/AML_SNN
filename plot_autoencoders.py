@@ -42,4 +42,4 @@ testingSet = SMNIST(datasetPath=netParams['training']['path']['in'],
 
 testing = Evaluation(netParams, device, optimizer, testingSet)
 
-testing.make_grid(model.decoder, n=5)
+testing.make_grid(testingSet[0], model.encoder, model.decoder, n=5)
