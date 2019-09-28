@@ -12,7 +12,7 @@ import lib.snn as snn
 
 import torch
 from lib.datasets import SMNIST
-from models.CNN import Raw_CNN
+from models.CNN import Tailored_CNN
 
 # CONSTANTS:
 USE_CUDA = False  # torch.cuda.is_available()
@@ -26,7 +26,7 @@ if TRAIN:
     device = torch.device("cuda" if USE_CUDA else "cpu")
 
     # Create network instance.
-    model = Raw_CNN().to(device)
+    model = Tailored_CNN().to(device)
 
     # Learning stats instance.
     stats = snn.learningStats()
@@ -51,7 +51,7 @@ if TRAIN:
 
 # load weights
 for momentum in np.arange(0, 0.99, 0.1):
-    model = Raw_CNN()
+    model = Tailored_CNN()
     with open('weights' + str(model.__class__) + '_' + str(momentum) + '.p', 'rb') as f:
         wc = pickle.load(f)
 

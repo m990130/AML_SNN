@@ -1,12 +1,21 @@
-from .slayer import spikeLayer as layer
-from .slayerLoihi import spikeLayer as loihi
+try:
+    from .slayer import spikeLayer as layer
+except ModuleNotFoundError as e:
+    print(e)
+try:
+    from .slayerLoihi import spikeLayer as loihi
+except ModuleNotFoundError as e:
+    print(e)
 # from slayer import yamlParams as params
 from .slayerParams import yamlParams as params
-from .spikeLoss import spikeLoss as loss
+try:
+    from .spikeLoss import spikeLoss as loss
+except ModuleNotFoundError as e:
+    print(e)
 from .spikeClassifier import spikeClassifier as predict
 from .quantizeParams import quantizeWeights as quantize
 from .learningStats import learningStats, learningStat
-
+from .slayerUpsampling import UpSampling2D
 '''
 This modules bundles various SLAYER PyTorch modules as a single package.
 The complete module can be imported as
