@@ -45,9 +45,39 @@ def uniform_spike(x, time_bins):
     return output.float()
 
 
+def cifar_generator(spikes, I, theta=1, V_min=-10):
+    
+    # first expand the dim of I (image intensity)
+    It = I.unsqueeze(3)
+    It = It * spikes
+        
+    # the padding controls where to pad, first two of the tuple control the last dim of the tensor
+    _pad = torch.nn.ConstantPad2d((1, 0, 0, 0), 0)
+    pad_I = _pad(It)
+
+    V = torch.zeros_like(pad_I)
+    next_Spikes = torch.zeros_like(pad_I)
+
+    T = pad_I.shape[-1]
+
+    for t in range(1, T):
+        # the extra spike generator for CIFAR-10
+        V[:, :, :, t] = V[:, :, :, t - 1]  + pad_I[:, :, :, t]
+        # thresholding and fire spike 
+        mask_threshold = V[:, :, :, t] >= theta
+        next_Spikes[:, :, :, t][mask_threshold] = 1
+        # reset the potential to zero
+        V[:, :, :, t][mask_threshold] -= theta
+
+        # reset the value to V_min if drops below (1c)
+        mask_min = (V[:, :, :, t] < V_min)
+        V[:, :, :, t][mask_min] = V_min
+
+    #return V[:, :, :, :, 1:], next_Spikes[:, :, :, :, 1:]
+    return next_Spikes[:, :, :, 1:]
+
 class SpikeDataset(Dataset):
-    def __init__(self, datasetPath, dataset,TimeBins=25, small=True, train=True, encoding='uniform',
-                 mode='classification'):
+    def __init__(self, datasetPath, dataset, cifar_encoding=False,TimeBins=25, small=True, train=True, encoding='uniform', mode='classification'):
         self.mode = mode
         self.path = datasetPath
         self.dataset = dataset
@@ -83,12 +113,17 @@ class SpikeDataset(Dataset):
                 'the choosen dataset {} is not valid . Valid are mnist, fashion and cifar10'.format(self.dataset))
         self.nTimeBins = TimeBins
         self.encoding = encoding
+        self.cifar_encoding = cifar_encoding
         
         
     def __getitem__(self, index):
         x, classLabel = self.samples[index]
         if self.encoding == 'uniform':
             x_spikes = uniform_spike(x, self.nTimeBins)
+            
+            if self.dataset == 'cifar10' and self.cifar_encoding:
+                #print('using cifar extra encoding')
+                x_spikes = cifar_generator(x_spikes, x)
         else:
             x_spikes = poisson_spike(x, self.nTimeBins)
         if self.mode == 'classification':
