@@ -16,19 +16,18 @@ from itertools import combinations
 # CONSTANTS:
 USE_CUDA = torch.cuda.is_available()
 EPOCHs = 6
-SMALL = True
+SMALL = False
 DATASETMODE = 'classification'
-MODEL_PTH = 'slayer_snn'
 TRAIN = True
 
-if TRAIN:
-    netParams = snn.params('network_specs/slayer_snn.yaml')
-    print(netParams)
+netParams = snn.params('network_specs/slayer_snn.yaml')
+print(netParams)
 
+if TRAIN:
     device = torch.device("cuda" if USE_CUDA else "cpu")
 
     # Create network instance.
-    model = SlayerSNN2(netParams).to(device)
+    model = SlayerSNN2(netParams, input_channels=1).to(device)
 
     # Learning stats instance.
     stats = snn.learningStats()
@@ -55,7 +54,7 @@ if TRAIN:
 
 # load weights
 for momentum in np.arange(0, 0.99, 0.1):
-    model = SlayerSNN2()
+    model = SlayerSNN2(netParams, input_channels=1)
     with open('weights' + str(model.__class__) + '_' + str(momentum) + '.p', 'rb') as f:
         wc = pickle.load(f)
 
@@ -104,7 +103,8 @@ for momentum in np.arange(0, 0.99, 0.1):
 
         # plt.show()
         fig.savefig(
-            './saved_figs/pca_' + str(pc1) + '_' + str(pc2) + '_' + str(momentum) + '_' + str(model.__class__) + '.pdf')
+            '/home/sarah/Documents/studies/SoSe19/aml_assignments/aml_project/slayer_pca/pca_loss_' + str(
+                model.__class__) + '_' + '{0:.2f}'.format(momentum) + '_' + str(pc1) + '_' + str(pc2) + '.pdf')
         plt.close(fig)
 
     print('printing triplets\n')
@@ -149,5 +149,7 @@ for momentum in np.arange(0, 0.99, 0.1):
 
         # plt.show()
         fig.savefig(
-            './saved_figs/pca_' + str(pc1) + '_' + str(pc2) + '_' + str(pc3) + '_' + str(momentum) + '_' + str(model.__class__) + '.pdf')
+            '/home/sarah/Documents/studies/SoSe19/aml_assignments/aml_project/slayer_pca/pca_triplets_' + str(
+                model.__class__) + '_' + '{0:.2f}'.format(momentum) + '_' + str(pc1) + '_' + str(pc2) + '_' + str(
+                pc3) + '.pdf')
         plt.close(fig)
