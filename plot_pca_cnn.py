@@ -60,13 +60,13 @@ for momentum in [ 0.2, 0.9]: #np.arange(0, 0.99, 0.1):
     comps = wc.get_components(12)
     loss = wc.loss
     N = len(loss)
+    L = - np.array(loss)
+    L = savgol_filter(L, 51, 3)  # window size 51, polynomial order 3
 
     mpl.rcParams['legend.fontsize'] = 10
     print('plotting tuples vs loss\n')
     for (pc1, pc2) in tqdm(combinations(range(0, 12), 2)):
-        z = - np.array(loss)
-        z = savgol_filter(z, 51, 3)  # window size 51, polynomial order 3
-
+        z = L
         x = comps[:, pc1]
         y = comps[:, pc2]
         fig = plt.figure()
@@ -113,7 +113,7 @@ for momentum in [ 0.2, 0.9]: #np.arange(0, 0.99, 0.1):
         x = comps[:, pc1]
         y = comps[:, pc2]
         z = comps[:, pc3]
-        t = -np.array(loss)
+        t = L
 
         fig = plt.figure()
         ax = fig.gca(projection='3d')
@@ -138,7 +138,7 @@ for momentum in [ 0.2, 0.9]: #np.arange(0, 0.99, 0.1):
             lii.set_solid_capstyle('round')
 
         cmap = mpl.cm.plasma
-        norm = mpl.colors.Normalize(vmin=t.min(), vmax=t.max())
+        norm = mpl.colors.Normalize(vmin=-4, vmax=0)
 
         cbaxes = fig.add_axes([0.025, 0.1, 0.03, 0.8])
         cb1 = mpl.colorbar.ColorbarBase(cbaxes, cmap=cmap,
